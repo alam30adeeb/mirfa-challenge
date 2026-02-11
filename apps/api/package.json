@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc --project ../../packages/crypto/tsconfig.json && tsc"
+    "build": "ncc build src/index.ts -o dist"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.0",
@@ -14,6 +14,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@vercel/ncc": "^0.38.4",
     "tsx": "^4.0.0",
     "typescript": "^5.0.0"
   }
