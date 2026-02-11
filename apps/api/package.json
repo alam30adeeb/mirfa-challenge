@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc"
+    "build": "tsc --project ../../packages/crypto/tsconfig.json && tsc"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.0",
