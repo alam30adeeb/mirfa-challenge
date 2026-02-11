@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "ncc build src/index.ts -o dist"
+    "postinstall": "pnpm --filter @repo/crypto run build",
+    "dev": "tsx watch src/index.ts"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.0",
