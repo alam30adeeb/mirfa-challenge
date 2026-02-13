@@ -5,13 +5,11 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-  "test": "vitest run src", 
-  "build": "tsc"
-},
-  "dependencies": {
-    "@types/node": "^20.0.0"
+    "test": "vitest run src",
+    "build": "tsc"
   },
   "devDependencies": {
+    "@types/node": "^20.19.33",
     "vitest": "^4.0.18"
   }
 }

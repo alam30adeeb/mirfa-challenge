@@ -10,33 +10,40 @@ export const encryptPayload = (
 
   const masterKey = Buffer.from(masterKeyHex, 'hex');
 
-  // 1. Generate DEK
+  // 1. Generate DEK (32 bytes)
   const dek = randomBytes(32); 
 
-  // 2. Encrypt Data
-  const iv = randomBytes(12);
-  const cipher = createCipheriv('aes-256-gcm', dek, iv);
+  // 2. Encrypt Payload (AES-256-GCM)
+  const payloadIv = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', dek, payloadIv);
   
-  let ciphertext = cipher.update(JSON.stringify(payload), 'utf8', 'hex');
-  ciphertext += cipher.final('hex');
-  const authTag = cipher.getAuthTag().toString('hex');
+  let payloadCt = cipher.update(JSON.stringify(payload), 'utf8', 'hex');
+  payloadCt += cipher.final('hex');
+  const payloadTag = cipher.getAuthTag().toString('hex');
 
-  // 3. Wrap DEK
+  // 3. Wrap DEK (AES-256-GCM)
   const keyIv = randomBytes(12);
   const keyCipher = createCipheriv('aes-256-gcm', masterKey, keyIv);
   
-  let wrappedKey = keyCipher.update(dek.toString('hex'), 'utf8', 'hex');
-  wrappedKey += keyCipher.final('hex');
-  const keyAuthTag = keyCipher.getAuthTag().toString('hex');
+  let dekWrapped = keyCipher.update(dek.toString('hex'), 'utf8', 'hex');
+  dekWrapped += keyCipher.final('hex');
+  const keyTag = keyCipher.getAuthTag().toString('hex');
 
-  const finalWrappedKey = `${keyIv.toString('hex')}:${keyAuthTag}:${wrappedKey}`;
-
+  // 4. Return EXACT Data Model
   return {
-    id: partyId,
-    ciphertext,
-    iv: iv.toString('hex'),
-    authTag,
-    wrappedKey: finalWrappedKey,
+    id: partyId, // Using partyId as ID for simplicity, or generate a UUID
+    partyId,
     createdAt: new Date().toISOString(),
+    
+    payload_nonce: payloadIv.toString('hex'),
+    payload_ct: payloadCt,
+    payload_tag: payloadTag,
+
+    dek_wrap_nonce: keyIv.toString('hex'),
+    dek_wrapped: dekWrapped,
+    dek_wrap_tag: keyTag,
+
+    alg: "AES-256-GCM",
+    mk_version: 1
   };
 };
