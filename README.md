@@ -57,14 +57,3 @@ pnpm dev
 Run the test suite for the cryptographic library:
 
 pnpm --filter @repo/crypto run test
-
-
-## 📂 Project Structure
-
-├── apps
-│   ├── api          # Fastify, Controllers, Service Layer
-│   └── web          # Next.js, UI Components
-├── packages
-│   ├── crypto       # Shared Encryption Logic
-│   └── config       # Shared TS/ESLint Configs
-└── README.md
