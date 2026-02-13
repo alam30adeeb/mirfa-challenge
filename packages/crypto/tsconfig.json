@@ -10,5 +10,6 @@
     "rootDir": "src",
     "declaration": true  // <-- ADD THIS LINE!
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts"]
 }
