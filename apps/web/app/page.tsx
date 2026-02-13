@@ -1,7 +1,10 @@
 'use client';
 
+import { getErrorMessage } from '../utils/errors';
 import { useState } from 'react';
 import { theme } from '../styles/theme';
+// Import the API service
+import { encryptTransaction, fetchTransaction, decryptTransaction } from '../utils/api'; 
 import Header from '../components/Header';
 import TransactionForm from '../components/TransactionForm';
 import RecordRetrieval from '../components/RecordRetrieval';
@@ -18,33 +21,21 @@ export default function Page() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-  // --- HANDLERS ---
+  // --- CLEAN HANDLERS ---
   const handleEncryptAndSave = async () => {
     try {
       setIsLoading(true); setError(''); setEncryptedRecord(null); setDecryptedResult(null);
       
       let parsedPayload;
-      try {
-        parsedPayload = JSON.parse(payload);
-      } catch (e) {
-        throw new Error("Invalid JSON format. Please check your syntax.");
-      }
+      try { parsedPayload = JSON.parse(payload); } catch (e) { throw new Error("Invalid JSON format. Please check your syntax."); }
       
-      const res = await fetch(`${API_URL}/tx/encrypt`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ partyId, payload: parsedPayload }),
-      });
-      
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to encrypt');
+      const data = await encryptTransaction(partyId, parsedPayload);
       
       setEncryptedRecord(data);
       setRecordId(data.id);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      // 🟢 LOOK HOW CLEAN THIS IS NOW!
+      setError(getErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
@@ -55,13 +46,12 @@ export default function Page() {
       setIsLoading(true); setError(''); setEncryptedRecord(null); setDecryptedResult(null);
       if (!recordId) throw new Error('Please enter a Record ID');
 
-      const res = await fetch(`${API_URL}/tx/${recordId}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to fetch');
+      const data = await fetchTransaction(recordId);
       
       setEncryptedRecord(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      // 🟢 SAME CLEAN HANDLER
+      setError(getErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
@@ -72,63 +62,46 @@ export default function Page() {
       setIsLoading(true); setError(''); setDecryptedResult(null);
       if (!recordId) throw new Error('Please enter a Record ID');
 
-      const res = await fetch(`${API_URL}/tx/${recordId}/decrypt`, { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to decrypt');
+      const data = await decryptTransaction(recordId);
       
       setDecryptedResult(data.originalPayload);
       
-      // Auto-fetch the encrypted record too if it's missing (for visual comparison)
       if (!encryptedRecord) {
-        const resFetch = await fetch(`${API_URL}/tx/${recordId}`);
-        if (resFetch.ok) setEncryptedRecord(await resFetch.json());
+        try {
+          const recordData = await fetchTransaction(recordId);
+          setEncryptedRecord(recordData);
+        } catch (ignored) { /* Silent fail is ok here */ }
       }
 
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      // 🟢 SAME CLEAN HANDLER
+      setError(getErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
   };
 
+  // --- RENDER ---
   return (
     <div style={theme.container}>
       <div style={theme.wrapper}>
-        
         <Header />
-
         {error && <div style={theme.error}>⚠️ {error}</div>}
-
         <div style={theme.grid}>
-          
-          {/* LEFT COLUMN: Controls */}
           <div style={theme.column}>
             <TransactionForm 
-              partyId={partyId} 
-              setPartyId={setPartyId}
-              payload={payload} 
-              setPayload={setPayload}
-              isLoading={isLoading} 
-              onEncrypt={handleEncryptAndSave}
+              partyId={partyId} setPartyId={setPartyId}
+              payload={payload} setPayload={setPayload}
+              isLoading={isLoading} onEncrypt={handleEncryptAndSave}
             />
-
             <RecordRetrieval 
-              recordId={recordId} 
-              setRecordId={setRecordId}
-              isLoading={isLoading} 
-              onFetch={handleFetch} 
-              onDecrypt={handleDecrypt}
+              recordId={recordId} setRecordId={setRecordId}
+              isLoading={isLoading} onFetch={handleFetch} onDecrypt={handleDecrypt}
             />
           </div>
-
-          {/* RIGHT COLUMN: Display */}
           <div style={theme.column}>
-            <DatabaseView 
-              encryptedRecord={encryptedRecord} 
-              decryptedResult={decryptedResult} 
-            />
+            <DatabaseView encryptedRecord={encryptedRecord} decryptedResult={decryptedResult} />
           </div>
-
         </div>
       </div>
     </div>
